@@ -1,0 +1,75 @@
+# ============================================================
+# Aptiv Bookkeeping CRM — Kenya Edition
+# GitHub Pages Auto-Deploy Workflow
+# ============================================================
+# Triggers on every push to main
+# Builds with Vite → deploys to gh-pages branch → live on GitHub Pages
+#
+# TO MOVE TO A CUSTOM DOMAIN:
+#   1. Add a CNAME record at your domain registrar pointing to aptivai-droid.github.io
+#   2. In repo Settings → Pages → Custom domain: enter your domain
+#   3. Add repo secret: VITE_BASE_PATH = /
+#   4. Push any change — the workflow picks up the new base path automatically
+# ============================================================
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:   # allows manual trigger from GitHub Actions tab
+
+permissions:
+  contents: write      # needed to push to gh-pages branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Node setup with npm cache ─────────────────────────
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # ── 3. Install dependencies ───────────────────────────────
+      - name: Install dependencies
+        run: npm ci
+
+      # ── 4. Build ──────────────────────────────────────────────
+      - name: Build Vite app
+        run: npm run build
+        env:
+          # Base path — change to / when using a custom domain
+          VITE_BASE_PATH: ${{ secrets.VITE_BASE_PATH || '/aptiv-bookkeeping-crm/' }}
+
+          # ── Supabase ──────────────────────────────────────────
+          # Add these in: repo Settings → Secrets → Actions
+          VITE_SUPABASE_URL:      ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+          # ── M-Pesa Daraja API ─────────────────────────────────
+          VITE_MPESA_CONSUMER_KEY:    ${{ secrets.VITE_MPESA_CONSUMER_KEY }}
+          VITE_MPESA_CONSUMER_SECRET: ${{ secrets.VITE_MPESA_CONSUMER_SECRET }}
+          VITE_MPESA_SHORTCODE:       ${{ secrets.VITE_MPESA_SHORTCODE }}
+          VITE_MPESA_PASSKEY:         ${{ secrets.VITE_MPESA_PASSKEY }}
+          VITE_MPESA_CALLBACK_URL:    ${{ secrets.VITE_MPESA_CALLBACK_URL }}
+          VITE_MPESA_ENV:             ${{ secrets.VITE_MPESA_ENV || 'sandbox' }}
+
+          # ── Bookkeeping Bridge ────────────────────────────────
+          VITE_BOOKKEEPING_API_URL: ${{ secrets.VITE_BOOKKEEPING_API_URL }}
+          VITE_BOOKKEEPING_API_KEY: ${{ secrets.VITE_BOOKKEEPING_API_KEY }}
+
+      # ── 5. Deploy to gh-pages branch ─────────────────────────
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist          # Vite output directory
+          branch: gh-pages      # GitHub Pages source branch
+          clean: true           # remove old files on each deploy
+          commit-message: "deploy: Aptiv Bookkeeping CRM Kenya — ${{ github.sha }}"

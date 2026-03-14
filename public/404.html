@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Aptiv Bookkeeping CRM — Kenya</title>
+  <!--
+    GitHub Pages SPA Routing Fix
+    When GitHub Pages hits a 404 (e.g. /clients, /compliance),
+    this script encodes the full URL into a query param and redirects
+    to index.html, which then decodes it and restores the correct route.
+    Source: https://github.com/rafgraph/spa-github-pages
+  -->
+  <script>
+    var segmentCount = 1; // 1 = repo subdirectory (aptiv-bookkeeping-crm)
+                          // 0 = custom domain at root
+    var l = window.location;
+    l.replace(
+      l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+      l.pathname.split('/').slice(0, 1 + segmentCount).join('/') + '/?p=/' +
+      l.pathname.slice(1).split('/').slice(segmentCount).join('/').replace(/&/g, '~and~') +
+      (l.search ? '&q=' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+      l.hash
+    );
+  </script>
+</head>
+<body></body>
+</html>

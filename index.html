@@ -5,6 +5,27 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Aptiv Bookkeeping CRM — Kenya</title>
+    <meta name="description" content="Aptiv Bookkeeping CRM — Kenya Edition. CBK · SASSRA · ICPAK · POCAMLA · M-Pesa integrated." />
+
+    <!--
+      GitHub Pages SPA Routing Fix — decode redirect from 404.html
+      Restores the original URL that was encoded by 404.html
+    -->
+    <script>
+      (function(l) {
+        if (l.search[1] === '/' ) {
+          var decoded = l.search.slice(1).split('&').map(function(s) {
+            return s.replace(/~and~/g, '&')
+          });
+          window.history.replaceState(
+            null, null,
+            l.pathname.slice(0, -1) + decoded[0] +
+            (decoded[1] ? '?' + decoded[1] : '') +
+            l.hash
+          );
+        }
+      }(window.location))
+    </script>
   </head>
   <body>
     <div id="root"></div>
