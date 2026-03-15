@@ -1,9 +1,11 @@
 import { useData } from '../contexts/DataContext'
+import { useAuth } from '../contexts/AuthContext'
 import { formatKES } from '../services/mpesa'
 import { Users, ShieldAlert, Smartphone, AlertTriangle, CheckCircle, Clock, FileCheck, TrendingUp } from 'lucide-react'
 
 export default function Dashboard() {
   const { stats, clients, flags, mpesaTxs } = useData()
+  const { SUPABASE_CONFIGURED } = useAuth()
 
   const recentFlags = flags.filter(f => f.status !== 'Resolved').slice(0, 4)
   const recentMpesa = mpesaTxs.slice(0, 5)
@@ -15,6 +17,17 @@ export default function Dashboard() {
         <h1 className="text-2xl font-bold text-gray-900">Aptiv Bookkeeping CRM</h1>
         <p className="text-gray-500 text-sm">Kenya Edition — CBK · SASSRA · ICPAK · POCAMLA · Commissioner of Co-operatives</p>
       </div>
+
+      {/* Demo mode banner */}
+      {!SUPABASE_CONFIGURED && (
+        <div className="bg-amber-50 border border-amber-300 rounded-xl p-3 flex items-center gap-3">
+          <span className="text-amber-600 text-lg">⚠</span>
+          <div>
+            <p className="text-sm font-semibold text-amber-900">Demo Mode — Live data not connected</p>
+            <p className="text-xs text-amber-700">Running on mock data. Add Supabase credentials as GitHub Secrets to enable live database, authentication, and M-Pesa sync.</p>
+          </div>
+        </div>
+      )}
 
       {/* Regulatory banner */}
       <div className="bg-green-50 border border-green-200 rounded-xl p-4">

@@ -1,13 +1,26 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, SUPABASE_CONFIGURED } from '../lib/supabase'
 
 const AuthContext = createContext(null)
 
+// Demo admin user — used when Supabase is not configured
+const DEMO_USER = {
+  id: 'demo-admin',
+  email: 'admin@aptivcrm.co.ke',
+  first_name: 'Neal',
+  last_name: 'Titus',
+  role: 'Admin',
+  status: 'Active',
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
+  // In demo mode (no Supabase), start logged in as demo admin
+  const [user, setUser] = useState(SUPABASE_CONFIGURED ? null : DEMO_USER)
+  const [loading, setLoading] = useState(SUPABASE_CONFIGURED)
 
   useEffect(() => {
+    if (!SUPABASE_CONFIGURED) return // demo mode — skip Supabase entirely
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         fetchUserProfile(session.user.id)
@@ -37,11 +50,20 @@ export function AuthProvider({ children }) {
   }
 
   async function signIn(email, password) {
+    if (!SUPABASE_CONFIGURED) {
+      // Demo mode — accept any credentials, log in as demo admin
+      setUser(DEMO_USER)
+      return
+    }
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
   }
 
   async function signOut() {
+    if (!SUPABASE_CONFIGURED) {
+      setUser(null)
+      return
+    }
     await supabase.auth.signOut()
   }
 
@@ -50,7 +72,7 @@ export function AuthProvider({ children }) {
   const isCompliance = () => ['Admin', 'COO', 'Compliance Officer'].includes(user?.role)
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut, isAdmin, canWrite, isCompliance }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signOut, isAdmin, canWrite, isCompliance, SUPABASE_CONFIGURED }}>
       {children}
     </AuthContext.Provider>
   )
