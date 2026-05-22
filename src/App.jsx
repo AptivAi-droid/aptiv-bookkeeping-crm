@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { DataProvider } from './contexts/DataContext'
 import { Toaster } from 'react-hot-toast'
+import ErrorBoundary from './components/ErrorBoundary'
 import Layout from './components/layout/Layout'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
@@ -17,62 +18,84 @@ import Journal from './pages/Journal'
 import AuditLog from './pages/AuditLog'
 import SettingsPage from './pages/Settings'
 
+// ── GitHub Pages SPA routing fix ───────────────────────────────────────────
+// 404.html encodes the path as a query param; this restores it before React Router runs
+;(function () {
+  const redirect = sessionStorage.getItem('redirect')
+  if (redirect) {
+    sessionStorage.removeItem('redirect')
+    window.history.replaceState(null, '', redirect)
+  }
+})()
+
+// ── Protected route ────────────────────────────────────────────────────────
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0a2e1a]">
-      <div className="text-center">
-        <div className="w-12 h-12 border-4 border-green-300 border-t-white rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-green-200 text-sm">Loading Aptiv Bookkeeping CRM…</p>
-        <p className="text-green-500 text-xs mt-1">Kenya Edition</p>
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0a2e1a]">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-green-300 border-t-white rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-green-200 text-sm">Loading Aptiv Bookkeeping CRM…</p>
+          <p className="text-green-500 text-xs mt-1">Kenya Edition · CBK · SASSRA · ICPAK</p>
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
+
   if (!user) return <Navigate to="/login" replace />
   return children
 }
 
+// ── App routes ────────────────────────────────────────────────────────────
 function AppRoutes() {
   const { user } = useAuth()
+
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-        <Route path="/dashboard"    element={<Dashboard />} />
-        <Route path="/clients"      element={<Clients />} />
-        <Route path="/mpesa"        element={<Mpesa />} />
-        <Route path="/transactions" element={<Transactions />} />
-        <Route path="/compliance"   element={<Compliance />} />
-        <Route path="/sassra"       element={<Sassra />} />
-        <Route path="/coop"         element={<CoopRegister />} />
-        <Route path="/bridge"       element={<Bridge />} />
-        <Route path="/reports"      element={<Reports />} />
-        <Route path="/journal"      element={<Journal />} />
-        <Route path="/audit"        element={<AuditLog />} />
-        <Route path="/settings"     element={<SettingsPage />} />
+        <Route path="/dashboard"    element={<ErrorBoundary pageName="Dashboard"><Dashboard /></ErrorBoundary>} />
+        <Route path="/clients"      element={<ErrorBoundary pageName="Clients"><Clients /></ErrorBoundary>} />
+        <Route path="/mpesa"        element={<ErrorBoundary pageName="M-Pesa"><Mpesa /></ErrorBoundary>} />
+        <Route path="/transactions" element={<ErrorBoundary pageName="Transactions"><Transactions /></ErrorBoundary>} />
+        <Route path="/compliance"   element={<ErrorBoundary pageName="Compliance"><Compliance /></ErrorBoundary>} />
+        <Route path="/sassra"       element={<ErrorBoundary pageName="SASSRA"><Sassra /></ErrorBoundary>} />
+        <Route path="/coop"         element={<ErrorBoundary pageName="Co-op Register"><CoopRegister /></ErrorBoundary>} />
+        <Route path="/bridge"       element={<ErrorBoundary pageName="Bridge"><Bridge /></ErrorBoundary>} />
+        <Route path="/reports"      element={<ErrorBoundary pageName="Reports"><Reports /></ErrorBoundary>} />
+        <Route path="/journal"      element={<ErrorBoundary pageName="Journal"><Journal /></ErrorBoundary>} />
+        <Route path="/audit"        element={<ErrorBoundary pageName="Audit Log"><AuditLog /></ErrorBoundary>} />
+        <Route path="/settings"     element={<ErrorBoundary pageName="Settings"><SettingsPage /></ErrorBoundary>} />
       </Route>
+
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   )
 }
 
+// ── Root ──────────────────────────────────────────────────────────────────
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <DataProvider>
-          <AppRoutes />
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              style: { borderRadius: '8px', fontFamily: 'Inter, sans-serif', fontSize: '14px' },
-              success: { style: { background: '#166534', color: 'white' } },
-              error:   { style: { background: '#dc2626', color: 'white' } },
-            }}
-          />
-        </DataProvider>
-      </AuthProvider>
-    </BrowserRouter>
+    <ErrorBoundary pageName="the application">
+      <BrowserRouter>
+        <AuthProvider>
+          <DataProvider>
+            <AppRoutes />
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                style: { borderRadius: '8px', fontFamily: 'Inter, sans-serif', fontSize: '14px' },
+                success: { style: { background: '#166534', color: 'white' } },
+                error:   { style: { background: '#dc2626', color: 'white' } },
+              }}
+            />
+          </DataProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   )
 }
