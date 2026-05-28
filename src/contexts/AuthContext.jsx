@@ -3,79 +3,73 @@ import { supabase, SUPABASE_CONFIGURED } from '../lib/supabase'
 
 const AuthContext = createContext(null)
 
-// Demo admin user — used when Supabase is not configured
 const DEMO_USER = {
-  id: 'demo-admin',
-  email: 'admin@aptivcrm.co.ke',
-  first_name: 'Neal',
-  last_name: 'Titus',
-  role: 'Admin',
-  status: 'Active',
+  id:         'demo-admin',
+  email:      'demo@aptivcrm.co.ke',
+  first_name: 'Demo',
+  last_name:  'Admin',
+  role:       'Admin',
+  status:     'Active',
 }
 
 export function AuthProvider({ children }) {
-  // In demo mode (no Supabase), start logged in as demo admin
-  const [user, setUser] = useState(SUPABASE_CONFIGURED ? null : DEMO_USER)
+  const [user,    setUser]    = useState(SUPABASE_CONFIGURED ? null : DEMO_USER)
   const [loading, setLoading] = useState(SUPABASE_CONFIGURED)
 
   useEffect(() => {
-    if (!SUPABASE_CONFIGURED) return // demo mode — skip Supabase entirely
-
+    if (!SUPABASE_CONFIGURED) return
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        fetchUserProfile(session.user.id)
-      } else {
-        setLoading(false)
-      }
+      if (session?.user) fetchUserProfile(session.user.id)
+      else setLoading(false)
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        fetchUserProfile(session.user.id)
-      } else {
-        setUser(null)
-        setLoading(false)
-      }
+      if (session?.user) fetchUserProfile(session.user.id)
+      else { setUser(null); setLoading(false) }
     })
     return () => subscription.unsubscribe()
   }, [])
 
   async function fetchUserProfile(authId) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('ab_users')
       .select('*')
       .eq('auth_user_id', authId)
-      .single()
-    setUser(data || null)
+      .maybeSingle()
+    if (error) { console.error('[Auth] Failed to fetch user profile:', error.message); setUser(null) }
+    else setUser(data || null)
     setLoading(false)
   }
 
   async function signIn(email, password) {
-    if (!SUPABASE_CONFIGURED) {
-      // Demo mode — accept any credentials, log in as demo admin
-      setUser(DEMO_USER)
-      return
-    }
+    if (!SUPABASE_CONFIGURED) { setUser(DEMO_USER); return }
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
   }
 
   async function signOut() {
-    if (!SUPABASE_CONFIGURED) {
-      setUser(null)
-      return
-    }
-    await supabase.auth.signOut()
+    if (!SUPABASE_CONFIGURED) { setUser(null); return }
+    const { error } = await supabase.auth.signOut()
+    if (error) console.error('[Auth] signOut error:', error.message)
   }
 
-  const isAdmin = () => user?.role === 'Admin'
-  const canWrite = () => ['Admin', 'COO', 'Compliance Officer'].includes(user?.role)
+  const isAdmin      = () => user?.role === 'Admin'
+  const canWrite     = () => ['Admin', 'COO', 'Compliance Officer'].includes(user?.role)
   const isCompliance = () => ['Admin', 'COO', 'Compliance Officer'].includes(user?.role)
+  const isViewer     = () => user?.role === 'Viewer'
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut, isAdmin, canWrite, isCompliance, SUPABASE_CONFIGURED }}>
+    <AuthContext.Provider value={{
+      user, loading, SUPABASE_CONFIGURED,
+      signIn, signOut,
+      isAdmin, canWrite, isCompliance, isViewer,
+    }}>
       {children}
     </AuthContext.Provider>
   )
 }
 
-export const useAuth = () => useContext(AuthContext)
+export const useAuth = () => {
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error('useAuth must be used within an AuthProvider')
+  return ctx
+}
