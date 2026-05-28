@@ -18,40 +18,49 @@ import Journal from './pages/Journal'
 import AuditLog from './pages/AuditLog'
 import SettingsPage from './pages/Settings'
 
-// ── GitHub Pages SPA routing fix ──────────────────────────────────────────────
+// ââ GitHub Pages SPA routing fix ââââââââââââââââââââââââââââââââââââââââââââââ
+// 404.html encodes the path as /?/<path>; this restores it before React Router runs
 ;(function () {
-  const redirect = sessionStorage.getItem('redirect')
-  if (redirect) {
-    sessionStorage.removeItem('redirect')
-    window.history.replaceState(null, '', redirect)
+  if (window.location.search[1] === '/') {
+    var decoded = window.location.search.slice(1).split('&').map(function (s) {
+      return s.replace(/~and~/g, '&')
+    }).join('?')
+    window.history.replaceState(
+      null, null,
+      window.location.pathname.replace(/\/$/, '') + decoded + window.location.hash
+    )
   }
 })()
 
-// ── Protected route ────────────────────────────────────────────────────────────
+// ââ Protected route âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a2e1a]">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-green-300 border-t-white rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-green-200 text-sm">Loading Aptiv Bookkeeping CRM…</p>
-          <p className="text-green-500 text-xs mt-1">Kenya Edition · CBK · SASSRA · ICPAK</p>
+          <p className="text-green-200 text-sm">Loading Aptiv Bookkeeping CRMâ¦</p>
+          <p className="text-green-500 text-xs mt-1">Kenya Edition Â· CBK Â· SASSRA Â· ICPAK</p>
         </div>
       </div>
     )
   }
+
   if (!user) return <Navigate to="/login" replace />
   return children
 }
 
-// ── App routes ─────────────────────────────────────────────────────────────────
+// ââ App routes ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function AppRoutes() {
   const { user } = useAuth()
+
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route path="/dashboard"    element={<ErrorBoundary pageName="Dashboard"><Dashboard /></ErrorBoundary>} />
         <Route path="/clients"      element={<ErrorBoundary pageName="Clients"><Clients /></ErrorBoundary>} />
@@ -66,23 +75,29 @@ function AppRoutes() {
         <Route path="/audit"        element={<ErrorBoundary pageName="Audit Log"><AuditLog /></ErrorBoundary>} />
         <Route path="/settings"     element={<ErrorBoundary pageName="Settings"><SettingsPage /></ErrorBoundary>} />
       </Route>
+
+      {/* Catch-all â redirect unknown paths to dashboard */}
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   )
 }
 
-// ── Root ───────────────────────────────────────────────────────────────────────
+// ââ Root ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 export default function App() {
   return (
     <ErrorBoundary pageName="the application">
-      <BrowserRouter>
+      <BrowserRouter basename="/aptiv-bookkeeping-crm">
         <AuthProvider>
           <DataProvider>
             <AppRoutes />
             <Toaster
               position="top-right"
               toastOptions={{
-                style: { borderRadius: '8px', fontFamily: 'Inter, sans-serif', fontSize: '14px' },
+                style: {
+                  borderRadius: '8px',
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: '14px',
+                },
                 success: { style: { background: '#166534', color: 'white' } },
                 error:   { style: { background: '#dc2626', color: 'white' } },
               }}
