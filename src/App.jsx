@@ -18,8 +18,7 @@ import Journal from './pages/Journal'
 import AuditLog from './pages/AuditLog'
 import SettingsPage from './pages/Settings'
 
-// ── GitHub Pages SPA routing fix ───────────────────────────────────────────
-// 404.html encodes the path as a query param; this restores it before React Router runs
+// ── GitHub Pages SPA routing fix ──────────────────────────────────────────────
 ;(function () {
   const redirect = sessionStorage.getItem('redirect')
   if (redirect) {
@@ -28,10 +27,9 @@ import SettingsPage from './pages/Settings'
   }
 })()
 
-// ── Protected route ────────────────────────────────────────────────────────
+// ── Protected route ────────────────────────────────────────────────────────────
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a2e1a]">
@@ -43,20 +41,17 @@ function ProtectedRoute({ children }) {
       </div>
     )
   }
-
   if (!user) return <Navigate to="/login" replace />
   return children
 }
 
-// ── App routes ────────────────────────────────────────────────────────────
+// ── App routes ─────────────────────────────────────────────────────────────────
 function AppRoutes() {
   const { user } = useAuth()
-
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
-
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route path="/dashboard"    element={<ErrorBoundary pageName="Dashboard"><Dashboard /></ErrorBoundary>} />
         <Route path="/clients"      element={<ErrorBoundary pageName="Clients"><Clients /></ErrorBoundary>} />
@@ -71,13 +66,12 @@ function AppRoutes() {
         <Route path="/audit"        element={<ErrorBoundary pageName="Audit Log"><AuditLog /></ErrorBoundary>} />
         <Route path="/settings"     element={<ErrorBoundary pageName="Settings"><SettingsPage /></ErrorBoundary>} />
       </Route>
-
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   )
 }
 
-// ── Root ──────────────────────────────────────────────────────────────────
+// ── Root ───────────────────────────────────────────────────────────────────────
 export default function App() {
   return (
     <ErrorBoundary pageName="the application">
