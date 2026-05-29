@@ -11,6 +11,18 @@ export default function Bridge() {
   const unsyncedMpesa = mpesaTxs.filter(t => !t.bookkeeping_synced)
   const unsyncedClients = clients.filter(c => !c.bridge_synced)
 
+  // Loading state â settings is null until DataContext initialises
+  if (!settings) {
+    return (
+      <div className="p-6 flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-green-300 border-t-white rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-gray-500 text-sm">Loading bridge configurationâ¦</p>
+        </div>
+      </div>
+    )
+  }
+
   const handleHealthCheck = async () => {
     setChecking(true)
     await new Promise(r => setTimeout(r, 1000))
@@ -22,7 +34,7 @@ export default function Bridge() {
     <div className="p-6 space-y-5">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Bookkeeping Bridge</h1>
-        <p className="text-gray-500 text-sm">CRM ↔ Roots Bookkeeping ↔ M-Pesa · Bidirectional data sync</p>
+        <p className="text-gray-500 text-sm">CRM â Roots Bookkeeping â M-Pesa Â· Bidirectional data sync</p>
       </div>
 
       {/* Architecture diagram */}
@@ -37,15 +49,15 @@ export default function Bridge() {
         </div>
         <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-gray-600">
           <div className="bg-green-50 rounded-lg p-3">
-            <p className="font-semibold text-green-800 mb-1">M-Pesa → CRM</p>
+            <p className="font-semibold text-green-800 mb-1">M-Pesa â CRM</p>
             <p>STK Push results, C2B payments, transaction receipts auto-mapped to client records</p>
           </div>
           <div className="bg-blue-50 rounded-lg p-3">
-            <p className="font-semibold text-blue-800 mb-1">CRM → Bookkeeping</p>
-            <p>KYC status, client profiles, M-Pesa transactions synced to bookkeeping member & ledger tables</p>
+            <p className="font-semibold text-blue-800 mb-1">CRM â Bookkeeping</p>
+            <p>KYC status, client profiles, M-Pesa transactions synced to bookkeeping member &amp; ledger tables</p>
           </div>
           <div className="bg-amber-50 rounded-lg p-3">
-            <p className="font-semibold text-amber-800 mb-1">Bookkeeping → CRM</p>
+            <p className="font-semibold text-amber-800 mb-1">Bookkeeping â CRM</p>
             <p>Account balances, journal entries, compliance flags pulled back to CRM client view</p>
           </div>
         </div>
@@ -81,9 +93,9 @@ export default function Bridge() {
         <button onClick={handleHealthCheck} disabled={checking}
           className="flex items-center gap-2 bg-green-700 hover:bg-green-800 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium">
           <RefreshCw className={`w-4 h-4 ${checking ? 'animate-spin' : ''}`} />
-          {checking ? 'Checking…' : 'Health Check'}
+          {checking ? 'Checkingâ¦' : 'Health Check'}
         </button>
-        <button onClick={() => toast.success('Bulk sync initiated — check back in a moment')}
+        <button onClick={() => toast.success('Bulk sync initiated â check back in a moment')}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
           <RefreshCw className="w-4 h-4" /> Sync All Pending
         </button>
